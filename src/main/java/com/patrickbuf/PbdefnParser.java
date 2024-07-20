@@ -17,11 +17,14 @@ final class PbdefnParser {
   private static final Pattern FIELD_PATTERN =
       Pattern.compile("^(?<fieldNumber>\\d+):int:(?<fieldName>[a-zA-Z_]+)$");
 
+  private PbdefnParser() {}
+
   /**
-   * Parses the given {@code file} as a pbdefn.
+   * Parses a file as a pbdefn.
    *
+   * @param path the path of the file to parse
    * @throws IOException if an I/O error occurs while reading from the file
-   * @throws InvalidPbdefnException if the file cannot be parsed as a pbdefn
+   * @throws InvalidPbdefnException if the file exists but is improperly formatted
    */
   static ParsedPbdefn parse(Path path) throws IOException, InvalidPbdefnException {
     List<String> lines = Files.readAllLines(path);
@@ -51,13 +54,11 @@ final class PbdefnParser {
       }
       builder.addField(
           Field.create(
-              Integer.parseInt(m.group(FIELD_NUMBER_GROUP_NAME)),
-              FieldType.INT,
-              m.group(FIELD_NAME_GROUP_NAME)));
+              /* number= */ Integer.parseInt(m.group(FIELD_NUMBER_GROUP_NAME)),
+              /* type= */ FieldType.INT,
+              /* name= */ m.group(FIELD_NAME_GROUP_NAME)));
     }
 
     return builder.build();
   }
-
-  private PbdefnParser() {}
 }
