@@ -22,9 +22,15 @@ final class JavaSourceGen {
 
     // Define instance variables
     for (Field field : pbdefn.fields()) {
-      FieldSpec fieldSpec =
-          FieldSpec.builder(TypeName.INT, field.name()).addModifiers(Modifier.PUBLIC).build();
-      templateClass.addField(fieldSpec);
+      // Field value
+      templateClass.addField(
+          FieldSpec.builder(TypeName.INT, field.name()).addModifiers(Modifier.PUBLIC).build());
+      // Field number, which is protobuf-internal
+      templateClass.addField(
+          FieldSpec.builder(TypeName.INT, String.format("%sFn", field.name()))
+              .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+              .initializer("$L", field.number())
+              .build());
     }
 
     // Generate the Java source code
