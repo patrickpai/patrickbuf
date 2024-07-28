@@ -1,5 +1,6 @@
 package com.patrickbuf;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.squareup.javapoet.*;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -8,8 +9,10 @@ import javax.lang.model.element.Modifier;
 
 final class JavaSourceGen {
 
+  @VisibleForTesting static final String PACKAGE_NAME = "com.patrickbuf";
+
   /** Generates a Java source file from the {@code pbdefn} and writes it to {@code out}. */
-  static boolean generate(ParsedPbdefn pbdefn, Path out) throws IOException {
+  static void generate(ParsedPbdefn pbdefn, Path out) throws IOException {
     // Define the class
     TypeSpec.Builder templateClass =
         TypeSpec.classBuilder(pbdefn.templateName())
@@ -25,10 +28,8 @@ final class JavaSourceGen {
     }
 
     // Generate the Java source code
-    JavaFile javaFile = JavaFile.builder("com.example.helloworld", templateClass.build()).build();
+    JavaFile javaFile = JavaFile.builder(PACKAGE_NAME, templateClass.build()).build();
     javaFile.writeTo(out);
-
-    return true;
   }
 
   private static MethodSpec privateConstructor(ParsedPbdefn pbdefn) {
