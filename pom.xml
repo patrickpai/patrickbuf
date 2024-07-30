@@ -87,6 +87,12 @@
             <artifactId>javapoet</artifactId>
             <version>1.13.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/net.magik6k/bitbuffer -->
+        <dependency>
+            <groupId>net.magik6k</groupId>
+            <artifactId>bitbuffer</artifactId>
+            <version>1.5.1</version>
+        </dependency>
     </dependencies>
 
 </project>
