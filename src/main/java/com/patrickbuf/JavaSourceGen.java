@@ -22,7 +22,8 @@ final class JavaSourceGen {
             .addMethod(JavaSourceGen.privateConstructor(pbdefn))
             .addMethod(JavaSourceGen.create(pbdefn))
             .addMethod(JavaSourceGen.readFromDisk(pbdefn))
-            .addMethod(JavaSourceGen.writeToDisk(pbdefn));
+            .addMethod(JavaSourceGen.writeToDisk(pbdefn))
+            .addMethod(JavaSourceGen.toString(pbdefn));
 
     // Define instance variables
     for (Field field : pbdefn.fields()) {
@@ -96,6 +97,26 @@ final class JavaSourceGen {
         .addParameter(JavaSourceGen.getGeneratedClassName(pbdefn), "instance")
         .addException(Exception.class)
         .addStatement("$T.write(out, $T.encode(instance))", Files.class, Endecoder.class)
+        .build();
+  }
+
+  private static MethodSpec toString(ParsedPbdefn pbdefn) {
+    String templateString =
+        pbdefn.fields().stream()
+            .map(field -> String.format("%s: %%s", field.name()))
+            .collect(Collectors.joining(", "));
+
+    return MethodSpec.methodBuilder("toString")
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(String.class)
+        .addStatement(
+            "$T fields = $T.format(\"$L\", $L)",
+            String.class,
+            String.class,
+            templateString,
+            getCanonicalParameterList(pbdefn))
+        .addStatement("return $T.format(\"$L(%s)\", fields)", String.class, pbdefn.templateName())
         .build();
   }
 

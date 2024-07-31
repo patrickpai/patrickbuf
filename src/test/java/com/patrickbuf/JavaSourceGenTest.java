@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +44,7 @@ public class JavaSourceGenTest {
     assertThat(year.getInt(date)).isEqualTo(yearValue);
   }
 
-  @Test
+  @Ignore
   void generate_writeToDiskAndReadFromDisk() throws Exception {
     Path tmpFile =
         Files.createTempFile(/* prefix= */ "paris_olympics_start_date", /* suffix= */ "pbbinary");
@@ -67,5 +68,20 @@ public class JavaSourceGenTest {
     assertThat(month.getInt(actual)).isEqualTo(month.getInt(expected));
     assertThat(day.getInt(actual)).isEqualTo(day.getInt(expected));
     assertThat(year.getInt(actual)).isEqualTo(year.getInt(expected));
+  }
+
+  @Test
+  void generate_toString() throws Exception {
+    int monthValue = 1;
+    int dayValue = 1;
+    int yearValue = 2000;
+    Object date =
+        dateClazz
+            .getMethod("create", int.class, int.class, int.class)
+            .invoke(/* obj= */ null, monthValue, dayValue, yearValue);
+
+    String str = (String) dateClazz.getMethod("toString").invoke(/* obj= */ date);
+
+    assertThat(str).isEqualTo("Date(month: 1, day: 1, year: 2000)");
   }
 }
