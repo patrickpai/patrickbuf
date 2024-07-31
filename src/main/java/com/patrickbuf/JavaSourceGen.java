@@ -3,6 +3,7 @@ package com.patrickbuf;
 import com.google.common.annotations.VisibleForTesting;
 import com.squareup.javapoet.*;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
@@ -17,8 +18,11 @@ final class JavaSourceGen {
     TypeSpec.Builder templateClass =
         TypeSpec.classBuilder(pbdefn.templateName())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addMethod(JavaSourceGen.privateZeroParamConstructor())
             .addMethod(JavaSourceGen.privateConstructor(pbdefn))
-            .addMethod(JavaSourceGen.create(pbdefn));
+            .addMethod(JavaSourceGen.create(pbdefn))
+            .addMethod(JavaSourceGen.readFromDisk(pbdefn))
+            .addMethod(JavaSourceGen.writeToDisk(pbdefn));
 
     // Define instance variables
     for (Field field : pbdefn.fields()) {
@@ -36,6 +40,10 @@ final class JavaSourceGen {
     // Generate the Java source code
     JavaFile javaFile = JavaFile.builder(PACKAGE_NAME, templateClass.build()).build();
     javaFile.writeTo(out);
+  }
+
+  private static MethodSpec privateZeroParamConstructor() {
+    return MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build();
   }
 
   private static MethodSpec privateConstructor(ParsedPbdefn pbdefn) {
@@ -65,6 +73,34 @@ final class JavaSourceGen {
         JavaSourceGen.getCanonicalParameterList(pbdefn));
 
     return create.build();
+  }
+
+  private static MethodSpec readFromDisk(ParsedPbdefn pbdefn) {
+    ClassName generatedClass = JavaSourceGen.getGeneratedClassName(pbdefn);
+    return MethodSpec.methodBuilder("readFromDisk")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(generatedClass)
+        .addParameter(Path.class, "in")
+        .addException(Exception.class)
+        .addStatement("$T skeleton = new $T()", generatedClass, generatedClass)
+        .addStatement("$T.decode($T.readAllBytes(in), skeleton)", Endecoder.class, Files.class)
+        .addStatement("return skeleton")
+        .build();
+  }
+
+  private static MethodSpec writeToDisk(ParsedPbdefn pbdefn) {
+    return MethodSpec.methodBuilder("writeToDisk")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(void.class)
+        .addParameter(Path.class, "out")
+        .addParameter(JavaSourceGen.getGeneratedClassName(pbdefn), "instance")
+        .addException(Exception.class)
+        .addStatement("$T.write(out, $T.encode(instance))", Files.class, Endecoder.class)
+        .build();
+  }
+
+  private static ClassName getGeneratedClassName(ParsedPbdefn pbdefn) {
+    return ClassName.get("", pbdefn.templateName());
   }
 
   /**
