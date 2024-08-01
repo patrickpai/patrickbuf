@@ -3,6 +3,8 @@
 Inspired by [protobuf](https://github.com/protocolbuffers/protobuf), patrickbuf is my own implementation of a
 language-agnostic data representation.
 
+https://github.com/user-attachments/assets/18c2b744-1783-43e7-bb7a-f77e395a81ab
+
 ## Supported user journeys
 
 1. Define a template in a `.pbdefn`
