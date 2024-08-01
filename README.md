@@ -14,11 +14,10 @@ https://github.com/user-attachments/assets/18c2b744-1783-43e7-bb7a-f77e395a81ab
     2. write an in-memory template instance to disk, as binary
     3. read into memory a template instance that's stored as binary on disk
 
-## `.pbdefn`
+## `.pbdefn` template files
 
-Template files should be created with the `.pbdefn` extension.
-
-Here's what an example `Date.pbdefn` file might look like:
+A template file contains one *template*, which is a description of some related data. For example, here's what
+a `Date.pbdefn` file might look like:
 
 ```
 Date
@@ -27,24 +26,73 @@ Date
 2:int:year
 ```
 
-Compile using the `patrickc` compiler.
+The top-most line contains the *template name*, in this case "Date". Every subsequent line contains a *template field*,
+and must follow the `<field number>:<field type>:<field name>` format.
 
-## `.pbbinary`
+Currently supported are:
 
-Binary patrickbuf files should end in the `.pbbinary` extension.
+* Field numbers in the range [0, 15]
+* Field type "int"
+* Field names matching regex `[a-zA-Z]+`
+
+To compile a template file into source code, use the `patrickc` compiler. Example invocation:
+
+```
+java -jar target/patrickbuf-1.0-SNAPSHOT-jar-with-dependencies.jar src/test/java/com/patrickbuf/valid.pbdefn --java_out=src/main/java/`
+```
+
+## Generated code
+
+For a template with name "Date",
+
+```java
+public final class Date {
+    ...
+
+    public static Date create(/* template fields here */) { ... }
+
+    public static Date readFromDisk(Path in) throws Exception { ... }
+
+    public static void writeToDisk(Path out, Date instance) throws Exception { ... }
+
+    @Override
+    public String toString() { ... }
+}
+```
+
+For each template field of type "int",
+
+```java
+public final class Date {
+    public int yourTemplateFieldName;
+
+    ...
+}
+```
+
+## Binary encoding and `.pbbinary`
+
+Template instances can be encoded to binary, for compact storage. Binary patrickbuf files conventionally end in
+the `.pbbinary` extension.
 
 Their encoding is as follows:
 
 ```
-<4 bits, the field number>
-<3 bits, the field type>
-<N bytes, the field value>
-... repeat for all fields ...
+# Header
+[4 bytes] Number of subsequent bits
+
+# Body
+For each template field:
+  [4 bits] Field number
+  [3 bits] Field type, represented as an integer
+  [?] Field value
 ```
 
-| Field type | Value of N |
-|------------|------------|
-| int        | 4          |
+| Field type | Field type integer representation | Value of ? |
+|------------|-----------------------------------|------------|
+| int        | 0                                 | 4 bytes    |
+
+Multi-byte values are stored in big-endian order.
 
 ## How patrickbuf was built
 
